@@ -1,4 +1,4 @@
-/***** PROJECT 1 *****/
+/***** PROJECT 2 *****/
 // Student Group: Nicole Ajoy & Yvette Williamson
 
 /***** HOW TO RUN *****/
@@ -6,31 +6,15 @@
 antlr Pascal.g4
 javac Pascal*.java 
 grun Pascal program tests/test#.pas -gui
-(# between 1-15)
+(# between 1-20)
 */
 
 /*********************************************************/
 
 grammar Pascal;
 
-@header
-   {
-      import java.lang.Math;
-      import java.util.ArrayList;
-      import java.util.HashMap;
-      import java.util.Scanner;
-   }
-
-@members
-   {
-      HashMap<String, Boolean> mapBool = new HashMap();
-      HashMap<String, Double> mapReal = new HashMap();
-   }
-
-/*********************************************************/
-
 program
-   : programHeader ((partBlock)* mainBlock)+
+   : programHeader ((partBlock)* mainBlock)+    
    ;
 
 programHeader
@@ -41,54 +25,27 @@ partBlock
    : varDecBlock
    ;
 
-type
-   : bool
-   | REAL_NUMBER
-   ;
-
 varDecBlock
    : VAR (varDec ';')+
    ;
 
 varDec 
    : varSingleDec
-   { 
-      System.out.println("Map of bool variables: " + mapBool);
-      System.out.println("Map of real variables: " + mapReal);
-      System.out.println();
-   }
    | varListDec
-   { 
-      System.out.println("Map of bool variables: " + mapBool);
-      System.out.println("Map of real variables: " + mapReal);
-      System.out.println();
-   }
    ;
 
 bool
-   : TRUE 
-   | FALSE
+   : (TRUE | FALSE)
    ;
 
 varSingleDec
-   : ID ':' BOOLEAN '=' bool { mapBool.put($ID.text, new Boolean($bool.text)); }
-   | ID ':' REAL '=' REAL_NUMBER { mapReal.put($ID.text, new Double($REAL_NUMBER.text)); }
+   : ID ':' BOOLEAN '=' bool
+   | ID ':' REAL '=' REAL_NUMBER
    ;
 
-varListDec returns [List<String> varList]
-@init { $varList = new ArrayList<String>(); }
-   : ID {$varList.add($ID.text);} (',' ID {$varList.add($ID.text);})* ':' BOOLEAN
-   { 
-      // System.out.println("Bool(s) declared: " + $varList);
-      for (int i = 0; i < $varList.size(); i++)
-         mapBool.put($varList.get(i), null);
-   }
-   | ID {$varList.add($ID.text);} (',' ID {$varList.add($ID.text);})* ':' REAL 
-   {
-      // System.out.println("Real(s) declared: " + $varList);
-      for (int i = 0; i < $varList.size(); i++) 
-         mapReal.put($varList.get(i), null);
-   }
+varListDec
+   : ID (',' ID)* ':' BOOLEAN
+   | ID (',' ID)* ':' REAL 
    ;
 
 mainBlock
@@ -101,151 +58,88 @@ statements
 
 statement
    : // emptyStatement
-   | assignmentStatement
-   {
-      System.out.println("Map of bool variables: " + mapBool);
-      System.out.println("Map of real variables: " + mapReal);
-      System.out.println();
-   }
-   | ifStatement 
-   | caseStatement
-   | writeStatement
-   | readStatement
+   | assignmentStatement   
+   | ifStatement          
+   | caseStatement        
+   | whileDoLoop          
+   | forDoLoop             
+   | writeStatement        
+   | readStatement         
    ;
 
 assignmentStatement
-   : ID ':=' expression 
-   { 
-      mapReal.put($ID.text, $expression.f);
-      // System.out.println($ID.text + " = " + $expression.text + " = " + $expression.f);
-   }
-   | ID ':=' condition 
-   { 
-      mapBool.put($ID.text, $condition.b);
-      // System.out.println();
-   }
+   : ID ':=' expression   
+   | ID ':=' condition    
    ;
 
-expression returns [double f]
-   : '(' e=expression ')'                    { $f = $e.f; }
-   | SQRT e=expression                       { $f = (Double)Math.sqrt($e.f); }
-   | SIN e=expression                        { $f = (Double)Math.sin($e.f); }
-   | COS e=expression                        { $f = (Double)Math.cos($e.f); }
-   | LN e=expression                         { $f = (Double)Math.log($e.f); } 
-   | EXP e=expression                        { $f = (Double)Math.exp($e.f); }
-   | eL=expression PRODUCT eR=expression     { $f = $eL.f * $eR.f; }
-   | eL=expression DIVIDE eR=expression      { $f = $eL.f / $eR.f; }
-   | eL=expression PLUS eR=expression        { $f = $eL.f + $eR.f; }
-   | eL=expression MINUS eR=expression       { $f = $eL.f - $eR.f; }
-   | eL=expression MOD eR=expression         { $f = $eL.f % $eR.f; }
-   | MINUS REAL_NUMBER                       { $f = -Double.parseDouble($REAL_NUMBER.text); }
-   | REAL_NUMBER                             { $f = Double.parseDouble($REAL_NUMBER.text); }
-   | ID 
-   { 
-      if (mapReal.containsKey($ID.text) && mapReal.get($ID.text)!=null) 
-         $f = mapReal.get($ID.text);
-      else if (mapReal.containsKey($ID.text) && mapReal.get($ID.text)==null)
-         System.out.println($ID.text + " not initialized");
-      else if (!mapReal.containsKey($ID.text))
-         System.out.println("Variable " + $ID.text + " not declared");
-   }
-   ;
-
-condition returns [boolean b]
-   : '(' e=condition ')'               { $b = $e.b; }
-   | eL=condition AND eR=condition     { $b = $eL.b && $eR.b; }
-   | eL=condition OR eR=condition      { $b = $eL.b || $eR.b; }
-   | NOT e=condition                   { $b = !$e.b; }
-   | eL=condition XOR eR=condition 
-   { 
-      if ($eL.text != $eR.text) $b = true;
-      else $b = false;
-   }
-   | cL=expression EQ cR=expression    { $b = $cL.f == $cR.f; }
-   | cL=expression NEQ cR=expression   { $b = $cL.f != $cR.f; }
-   | cL=expression GT cR=expression    { $b = $cL.f > $cR.f; }
-   | cL=expression LT cR=expression    { $b = $cL.f < $cR.f; }
-   | cL=expression GE cR=expression    { $b = $cL.f >= $cR.f; }
-   | cL=expression LE cR=expression    { $b = $cL.f <= $cR.f; }
-   | NOT c=condition                   { $b = !$c.b; }
-   | TRUE                              { $b = true; }
-   | FALSE                             { $b = false; }
+expression
+   : '(' e=expression ')' 
+   | SQRT e=expression    
+   | SIN e=expression      
+   | COS e=expression      
+   | LN e=expression       
+   | EXP e=expression      
+   | eL=expression PRODUCT eR=expression     
+   | eL=expression DIVIDE eR=expression      
+   | eL=expression PLUS eR=expression        
+   | eL=expression MINUS eR=expression       
+   | eL=expression MOD eR=expression
+   | MINUS REAL_NUMBER
+   | REAL_NUMBER
    | ID
-   { 
-      if (mapBool.containsKey($ID.text) && mapBool.get($ID.text)!=null)
-         $b = mapBool.get($ID.text);
-      else if (mapBool.containsKey($ID.text) && mapBool.get($ID.text)==null)
-         System.out.println($ID.text + " not initialized");
-      else if (!mapBool.containsKey($ID.text))
-         System.out.println("Variable " + $ID.text + " not declared");
-   }
+   ;
+
+condition
+   : '(' e=condition ')'
+   | eL=condition AND eR=condition
+   | eL=condition OR eR=condition
+   | NOT e=condition
+   | eL=condition XOR eR=condition 
+   | cL=expression EQ cR=expression
+   | cL=expression NEQ cR=expression
+   | cL=expression GT cR=expression
+   | cL=expression LT cR=expression
+   | cL=expression GE cR=expression 
+   | cL=expression LE cR=expression
+   | NOT c=condition
+   | bool
+   | ID
    ;
 
 ifStatement
-   : IF condition THEN {$condition.b}? statement
-   | IF condition THEN {$condition.b}? statement ELSE {!$condition.b}? statement
+   : IF condition THEN statement (ELSE statement)?
    ;
 
 caseStatement
-   : CASE expression OF (REAL ':' statement)+ END ';'
-   | CASE expression OF (BOOLEAN ':' statement)+ END ';'
+   : CASE expression OF (REAL_NUMBER ':' statements)+ END
+   | CASE condition OF (bool ':' statements)+ END
+   | CASE ID OF (ID ':' statements)+ END
+   ;
+
+whileDoLoop
+   : WHILE condition DO BEGIN statements END       
+   ;
+
+forDoLoop
+   : FOR ID ':=' REAL_NUMBER TO REAL_NUMBER DO BEGIN statements END  
    ;
 
 writeStatement
-   : WRITELN '()' { System.out.println(); } // emptyParameter
-   | WRITELN '(' writeParameter (',' writeParameter)* ')' { System.out.print("\n"); }
+   : WRITELN '()'
+   | WRITELN '(' writeParameter (',' writeParameter)* ')'
    ;
 
 writeParameter
-   : STRING_LIT 
-   { 
-      // Remove single apostrophes from string
-      System.out.print($STRING_LIT.text.substring(1, $STRING_LIT.text.length()-1));
-   }
+   : expression
+   | condition
+   | STRING_LIT
    | ID
-   { 
-      if (mapBool.containsKey($ID.text))
-         System.out.print(mapBool.get($ID.text));
-      else if (mapReal.containsKey($ID.text))
-         System.out.print(mapReal.get($ID.text));
-      else
-         System.out.println("ERR");
-   }
-   | expression { System.out.print($expression.f); }
-   | condition { System.out.print($condition.b); }
    ;
 
-readStatement returns [List<String> readList]
-@init 
-{ 
-   $readList = new ArrayList<String>();
-   int counter = 1;
-}
+readStatement
    : READLN ('()')?
-   {
-      Scanner sc = new Scanner(System.in);
-      String userInput = sc.nextLine(); // Wait for input then assign
-      // System.out.println("Input: " + userInput); // Print result
-   }
-   | READLN '(' ID {$readList.add($ID.text);} (',' {counter++;} ID {$readList.add($ID.text);})* ')'
-   {
-      int i = 0;
-      Scanner sc = new Scanner(System.in);
-      while (i < counter)
-      {
-         String userInput = sc.next(); // Wait for input then assign
-         $readList.add(userInput);
-         // System.out.println("Input: " + userInput); // Print result
-         if (mapReal.containsKey($readList.get(i)))
-            mapReal.put($readList.get(i), Double.parseDouble(userInput));
-         else
-            System.out.println("ERR" + "\n");
-         i++;
-      }
-   }
+   | READLN '(' ID (',' ID )* ')'
    ;
-
-/*********************************************************/
 
 // Arithmetic operators
 PLUS           : '+';
@@ -284,15 +178,19 @@ BEGIN          : 'begin';
 BOOLEAN        : 'boolean';
 CASE           : 'case';
 CONST          : 'const';
+DO             : 'do';
 OF             : 'of';
 ELSE           : 'else';
 END            : 'end';
+FOR            : 'for';
 IF             : 'if';
 PROGRAM        : 'program';
 READLN         : 'readln';
 REAL           : 'real';
+TO             : 'to';
 THEN           : 'then';
 VAR            : 'var';
+WHILE          : 'while';
 WRITELN        : 'writeln';
 
 // Essentials
