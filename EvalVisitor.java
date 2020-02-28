@@ -140,24 +140,23 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	
 				// evaluate the expression
 				value = this.visit(ctx.expression());
-				System.out.println(value);
+				System.out.println(value.toString());
 			}
 	
-
 		}
         
         return Value.VOID;
 	}
 
-	// @Override public Value visitNumberAtom(PascalParser.NumberAtomContext ctx) { 
-	// 	System.out.println("real number");
-	// 	return  this.visit(ctx.getText());
-	// }
+	@Override public Value visitNumberAtom(PascalParser.NumberAtomContext ctx) { 
+		System.out.println(Double.valueOf(ctx.getText()));
+		return new Value(Double.valueOf(ctx.getText()));
+	}
 
-	// @Override public Value visitBooleanAtom(PascalParser.BooleanAtomContext ctx) { 
-	// 	System.out.println("boolean");
-	// 	return  this.visit(ctx.getText());
-	// }
+	@Override public Value visitBooleanAtom(PascalParser.BooleanAtomContext ctx) { 
+		System.out.println(Boolean.valueOf(ctx.getText()));
+		return new Value(Boolean.valueOf(ctx.getText()));
+	}
 
 	// @Override public Value visitIdAtom(PascalParser.IdAtomContext ctx) { 
 	// 	System.out.println("Id");
