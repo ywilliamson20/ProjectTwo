@@ -10,10 +10,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override
     public Value visitLogExpression(PascalParser.LogExpressionContext ctx) { 
 
-		// String str = ctx.getText();
-        // // strip quotes
-        // str = str.substring(1, str.length() - 1).replace("\"\"", "\"");
-		// return new Value(str);
+	
 		System.out.println("log");
 		return  this.visit(ctx.expression());
 	}
@@ -90,13 +87,66 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	}
 
 	@Override public Value visitRelationalExpression(PascalParser.RelationalExpressionContext ctx) { 
+		Value left = this.visit(ctx.expression(0));
+        Value right = this.visit(ctx.expression(1));
 		System.out.println("relational");
+        switch (ctx.op.getType()) {
+
+			case PascalParser.GT:
+				if(left != null&& right != null) {
+					System.out.println(left.asDouble());
+					return new Value(left.asDouble() > right.asDouble());
+					
+				}
+			case PascalParser.LT:
+				if(left != null&& right != null)  {
+					System.out.println(left.asDouble());
+					return new Value(left.asDouble() < right.asDouble());
+					
+				}
+			case PascalParser.GE:
+				if(left != null&& right != null)  {
+					System.out.println(left.asDouble());
+					return new Value(left.asDouble() >= right.asDouble());
+					
+				}
+			case PascalParser.LE:
+				if(left != null&& right != null)  {
+					System.out.println(left.asDouble());
+					return new Value(left.asDouble() <= right.asDouble());
+					
+				}
+            default:
+			System.out.println("relational");
+        }
+		
 		return  this.visit(ctx.expression(0));
 	}
 
 	@Override public Value visitEqualityExpression(PascalParser.EqualityExpressionContext ctx) { 
 		System.out.println("equality");
 		return  this.visit(ctx.expression(0));
+	}
+
+	@Override public Value visitWhileDoLoop(PascalParser.WhileDoLoopContext ctx) { 
+
+		Value value = this.visit(ctx.expression());
+		System.out.println("while");
+		if (value!=null){
+			while(value.asBoolean()) {
+
+				// evaluate the code block
+				this.visit(ctx.statements());
+	
+				// evaluate the expression
+				value = this.visit(ctx.expression());
+				System.out.println(value);
+			}
+	
+
+		}
+        
+        return Value.VOID;
 	}
 
 	// @Override public Value visitNumberAtom(PascalParser.NumberAtomContext ctx) { 
