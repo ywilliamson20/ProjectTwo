@@ -1,26 +1,22 @@
 //package pascal;
 
-import java.lang.Exception;
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-
-
 public class Main {
-
     public static void main(String[] args) throws Exception {
-
         if (args.length == 0) {
-            //args = new String[]{"src/main/mu/test.mu"};
+            // No file provided to run
         }
-
-        System.out.println("parsing: " + args[0]);
-
-        PascalLexer lexer = new PascalLexer(new ANTLRFileStream(args[0]));
-        PascalParser parser = new PascalParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.parse();
-        PascalVisitor visitor = new PascalVisitor();
-        visitor.visit(tree);
+        else {
+            System.out.println("Parsing: " + args[0]);
+            PascalLexer lexer = new PascalLexer(new ANTLRFileStream(args[0]));
+            PascalParser parser = new PascalParser(new CommonTokenStream(lexer));
+            // Pascal.g4 starts with "program" rule, so indicate parser to start there
+            ParseTree tree = parser.program();
+            EvalVisitor visitor = new EvalVisitor();
+            visitor.visit(tree);
+        }
     }
 }
