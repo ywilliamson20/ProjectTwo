@@ -7,6 +7,38 @@ import java.util.Map;
 public class EvalVisitor extends PascalBaseVisitor<Value> {
     private Map<String,Value> memory = new HashMap<String,Value>();
 
+	
+/*********************************************************/
+// variable declarations
+
+@Override 
+public Value visitVarSingleDec(PascalParser.VarSingleDecContext ctx) { 
+	String id = ctx.ID().getText();
+	Value v = this.visit(ctx.expression());
+	System.out.println(this.visit(ctx.expression()));
+
+	switch (ctx.type.getType()) {
+		case PascalParser.BOOLEAN:
+			// System.out.println("Type: boolean");
+			return memory.put(id, v); 
+		case PascalParser.REAL:
+			// System.out.println("Type: real");
+			return memory.put(id, v); 
+		default:
+			throw new RuntimeException("Unknown type: " + ctx.type.getType());
+	}
+}
+
+@Override 
+public Value visitVarListDec(PascalParser.VarListDecContext ctx) {
+	System.out.println("var list");
+	return Value.VOID;
+}
+
+/*********************************************************/
+// expression
+
+// special functions
 	@Override
     public Value visitLogExpression(PascalParser.LogExpressionContext ctx) { 
 
@@ -89,7 +121,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override public Value visitRelationalExpression(PascalParser.RelationalExpressionContext ctx) { 
 		Value left = this.visit(ctx.expression(0));
         Value right = this.visit(ctx.expression(1));
-		System.out.println("relational");
+		//System.out.println("relational");
         switch (ctx.op.getType()) {
 
 			case PascalParser.GT:
@@ -123,6 +155,39 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		return  this.visit(ctx.expression(0));
 	}
 
+	@Override public Value visitPrintInside(PascalParser.PrintInsideContext ctx) { 
+		//Value value = this.visit(ctx.expression(0));
+		System.out.println("writeln");
+		//System.out.println(value.toString());
+		return  this.visit(ctx.expression(0));
+	 }
+
+	// @Override public Value visitPrintNewline(PascalParser.PrintNewlineContext ctx) { 
+
+
+	 //}
+	// @Override public Value visitCaseStatement(PascalParser.CaseStatementContext ctx) {
+	// 	Value value = this.visit(ctx.expression());
+	// 	System.out.println("while");
+	// 	System.out.println(value.asBoolean());
+	// 	if (value!=null){
+	// 		while(value.asBoolean()) {
+
+	// 			// evaluate the code block
+	// 			value = this.visit(ctx.expression());
+	
+	// 			// evaluate the expression
+	// 			this.visit(ctx.statements());
+				
+	// 		}
+	
+	// 	}
+
+
+	//  }
+
+
+
 	@Override public Value visitEqualityExpression(PascalParser.EqualityExpressionContext ctx) { 
 		System.out.println("equality");
 		return  this.visit(ctx.expression(0));
@@ -131,7 +196,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override public Value visitWhileDoLoop(PascalParser.WhileDoLoopContext ctx) { 
 
 		Value value = this.visit(ctx.expression());
-		System.out.println("while");
+		//System.out.println("while");
+		//System.out.println(value.asBoolean());
 		if (value!=null){
 			while(value.asBoolean()) {
 
@@ -140,12 +206,37 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	
 				// evaluate the expression
 				value = this.visit(ctx.expression());
-				System.out.println(value.toString());
+				
 			}
 	
 		}
         
         return Value.VOID;
+	}
+	@Override public Value visitIfStatement(PascalParser.IfStatementContext ctx) {
+		//Value value = this.visit(ctx.expression());
+		System.out.println("if");
+		//System.out.println(value.asBoolean());
+		//if (value!=null){
+			//while(value.asBoolean()) {
+
+				// evaluate the code block
+				//this.visit(ctx.statements());
+	
+				// evaluate the expression
+				//value = this.visit(ctx.expression());
+				
+			//}
+	
+		//}
+        
+       return Value.VOID;
+
+	}
+
+	@Override public Value visitForDoLoop(PascalParser.ForDoLoopContext ctx) { 
+		System.out.println("for loop");
+		return  this.visit(ctx.expression(0));
 	}
 
 	@Override public Value visitNumberAtom(PascalParser.NumberAtomContext ctx) { 
@@ -157,20 +248,24 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		System.out.println(Boolean.valueOf(ctx.getText()));
 		return new Value(Boolean.valueOf(ctx.getText()));
 	}
+     @Override 
+    public Value visitIdAtom(PascalParser.IdAtomContext ctx) { 
+		System.out.println("id atom");
+		String id = ctx.getText();
+        Value value = memory.get(id);
+        if (value == null) {
+            throw new RuntimeException("No such variable: " + id);
+        }
+        return value;
+	}
 
-	// @Override public Value visitIdAtom(PascalParser.IdAtomContext ctx) { 
-	// 	System.out.println("Id");
-	// 	return  this.visit(ctx.getText());
-	// }
-
-	// @Override public Value visitStringAtom(PascalParser.StringAtomContext ctx) {
-	// 	System.out.println("String");
-	// 	return  this.visit(ctx.getText());
-	// }
-
-	// @Override public Value visitAtomExpression(PascalParser.AtomExpressionContext ctx) { 
-	// 	System.out.println("atom expression");
-	// 	return  this.visit(ctx.expression(0));
-	// }
+    @Override 
+    public Value visitStringAtom(PascalParser.StringAtomContext ctx) {
+		System.out.println("String");
+		String str = ctx.getText();
+        // strip quotes
+        str = str.substring(1, str.length() - 1).replace("\"\"", "\"");
+        return new Value(str);
+	}
 }
 
