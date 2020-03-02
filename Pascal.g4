@@ -1,12 +1,18 @@
+
+/***** PROJECT 2 *****/
+// Student Group: Nicole Ajoy & Yvette Williamson
+
+/***** HOW TO RUN *****/
 /***** PROJECT 2 *****/
 // Student Group: Nicole Ajoy & Yvette Williamson
 
 /***** HOW TO RUN *****/
 /* 
-antlr Pascal.g4
-javac Pascal*.java 
-grun Pascal program tests/test#.pas -gui
-(# between 1-20)
+cd C:\Javalib\pascal
+antlr4 Pascal.g4
+javac *.java
+java Main tests/test16.pas
+(# between 1-19)
 */
 
 /*********************************************************/
@@ -14,7 +20,7 @@ grun Pascal program tests/test#.pas -gui
 grammar Pascal;
 
 program
-   : programHeader ((partBlock)* mainBlock)+    
+   : programHeader ((partBlock)* mainBlock)+
    ;
 
 programHeader
@@ -22,30 +28,21 @@ programHeader
    ;
 
 partBlock
-   : varDecBlock
+   : functionStart 
+   | varDecBlock 
    ;
 
+functionStart
+   :'function' ID LEFTP ARGUMENTS (',' ARGUMENTS)* RIGHTP ':' ID
+   ;
+  
 varDecBlock
    : VAR (varDec ';')+
    ;
 
 varDec 
-   : varSingleDec
-   | varListDec
-   ;
-
-bool
-   : (TRUE | FALSE)
-   ;
-
-varSingleDec
-   : ID ':' BOOLEAN '=' bool
-   | ID ':' REAL '=' REAL_NUMBER
-   ;
-
-varListDec
-   : ID (',' ID)* ':' BOOLEAN
-   | ID (',' ID)* ':' REAL 
+   : ID ':' type=(BOOLEAN | REAL) '=' expression   #varSingleDec
+   | ID (',' ID)* ':' type=(BOOLEAN | REAL)        #varListDec
    ;
 
 mainBlock
@@ -58,87 +55,73 @@ statements
 
 statement
    : // emptyStatement
-   | assignmentStatement   
-   | ifStatement          
-   | caseStatement        
-   | whileDoLoop          
-   | forDoLoop             
-   | writeStatement        
-   | readStatement         
+   | assignStatement
+   | ifStatement
+   | caseStatement
+   | whileDoLoop
+   | forDoLoop
+   | writeStatement
+   | readStatement
    ;
 
-assignmentStatement
-   : ID ':=' expression   
-   | ID ':=' condition    
+assignStatement
+   : ID ':=' expression
    ;
 
 expression
-   : '(' e=expression ')' 
-   | SQRT e=expression    
-   | SIN e=expression      
-   | COS e=expression      
-   | LN e=expression       
-   | EXP e=expression      
-   | eL=expression PRODUCT eR=expression     
-   | eL=expression DIVIDE eR=expression      
-   | eL=expression PLUS eR=expression        
-   | eL=expression MINUS eR=expression       
-   | eL=expression MOD eR=expression
-   | MINUS REAL_NUMBER
-   | REAL_NUMBER
-   | ID
+   : '(' expression ')'                                  #parenthesisExpression
+   // Special functions
+   | SQRT expression                                     #sqrtExpression
+   | SIN expression                                      #sinExpression
+   | COS expression                                      #cosExpression
+   | LN expression                                       #logExpression
+   | POWER expression                                    #expExpression
+   // Arithmetic expressions
+   | expression op=(PRODUCT | DIVIDE | MOD) expression   #multiplicativeExpression
+   | expression op=(PLUS | MINUS) expression             #additiveExpression
+   | MINUS expression                                    #negExpression
+   // Conditional operators
+   | expression AND expression                           #andExpression
+   | expression OR expression                            #orExpression
+   | NOT expression                                      #notExpression
+   | expression op=(EQ | NEQ) expression                 #equalityExpression
+   | expression op=(GT | LT | GE | LE) expression        #relationalExpression
+   | NOT expression                                      #notExpression
+   // Tiny expressions
+   | atom                                                #atomExpression
    ;
 
-condition
-   : '(' e=condition ')'
-   | eL=condition AND eR=condition
-   | eL=condition OR eR=condition
-   | NOT e=condition
-   | eL=condition XOR eR=condition 
-   | cL=expression EQ cR=expression
-   | cL=expression NEQ cR=expression
-   | cL=expression GT cR=expression
-   | cL=expression LT cR=expression
-   | cL=expression GE cR=expression 
-   | cL=expression LE cR=expression
-   | NOT c=condition
-   | bool
-   | ID
+atom
+   : REAL_NUMBER        #numberAtom
+   | (TRUE | FALSE)     #booleanAtom
+   | ID                 #idAtom
+   | STRING             #stringAtom
    ;
 
 ifStatement
-   : IF condition THEN statement (ELSE statement)?
+   : IF expression THEN statement (ELSE statement)?
    ;
 
 caseStatement
-   : CASE expression OF (REAL_NUMBER ':' statements)+ END
-   | CASE condition OF (bool ':' statements)+ END
-   | CASE ID OF (ID ':' statements)+ END
+   : CASE expression OF (expression ':' statements)+ END
    ;
 
 whileDoLoop
-   : WHILE condition DO BEGIN statements END       
+   : WHILE expression DO BEGIN statements END
    ;
 
 forDoLoop
-   : FOR ID ':=' REAL_NUMBER TO REAL_NUMBER DO BEGIN statements END  
+   : FOR ID ':=' expression TO expression DO BEGIN statements END
    ;
 
 writeStatement
-   : WRITELN '()'
-   | WRITELN '(' writeParameter (',' writeParameter)* ')'
-   ;
-
-writeParameter
-   : expression
-   | condition
-   | STRING_LIT
-   | ID
+   : WRITELN '()'                                        #writeNewline
+   | WRITELN '(' expression (',' expression)* ')'        #writeInside
    ;
 
 readStatement
-   : READLN ('()')?
-   | READLN '(' ID (',' ID )* ')'
+   : READLN ('()')?                 #readPause
+   | READLN '(' ID (',' ID )* ')'   #readInput
    ;
 
 // Arithmetic operators
@@ -151,7 +134,7 @@ SQRT           : 'sqrt';
 SIN            : 'sin';
 COS            : 'cos';
 LN             : 'ln';
-EXP            : 'exp';
+POWER          : 'exp';
 
 // Boolean operators
 TRUE           : 'true';
@@ -159,7 +142,6 @@ FALSE          : 'false';
 AND            : 'and';	
 NOT            : 'not';
 OR             : 'or';
-XOR            : 'xor';
 
 // Logical operators
 EQ             : '=';
@@ -193,8 +175,16 @@ VAR            : 'var';
 WHILE          : 'while';
 WRITELN        : 'writeln';
 
+//Functions Elements
+LEFTP          :'(';
+RIGHTP         :')';
+FUNCTIONNAME : ID ;
+ARGUMENTS :    ID (',' ID)* ;
+//FUNCTION:      FUNCTIONNAME LEFTP ARGUMENTS (',' ARGUMENTS)* RIGHTP ;
+
+
 // Essentials
 ID             : [A-Za-z][_A-Za-z0-9]*;
 REAL_NUMBER    : [0-9]+('.'[0-9]+)?;
-STRING_LIT     : '\'' (.*?) '\'';
+STRING         : '\'' (.*?) '\'';
 WS             : [ \t\r\n]+ -> skip;
