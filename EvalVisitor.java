@@ -273,27 +273,24 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 
 	@Override 
 	public Value visitIfStatement(PascalParser.IfStatementContext ctx) {
-        //System.out.println("if");
-        //System.out.println("expression list size: " + ctx.expression(0).size());
         Value value = this.visit(ctx.expression());
         
         String choice = this.visit(ctx.expression()).asString();
-		//System.out.println(choice);
 
 		if (choice=="true") {
-            System.out.println(true);
-           //if(this.visit(ctx.statement(0)).asString()!=null){
-            //return this.visit(ctx.statement(0));
-           //}
+			System.out.println(true);
+			this.visit(ctx.statement(0));
+			value = this.visit(ctx.expression());
             
         }
         if (choice=="false") {
-            System.out.println(false);
-            //return this.visit(ctx.statement(1));
-            
+			System.out.println(false);
+			this.visit(ctx.statement(1));
+			value = this.visit(ctx.expression());
+           
         }
         
-       return Value.VOID;
+       return this.visit(ctx.expression());
 	}
 
 // @Override 
@@ -316,20 +313,14 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override 
 	public Value visitWhileDoLoop(PascalParser.WhileDoLoopContext ctx) { 
 		Value value = this.visit(ctx.expression());
-		//System.out.println("while");
-		//System.out.println(value.asBoolean());
-		
-		//if (this.visit(ctx.expression()) != null){
 
 			while(value.asBoolean()) {
-				// evaluate code block
+				this.visit(ctx.statements());
+				value = this.visit(ctx.expression());
 			
-				// evaluate expression
-				return this.visit(ctx.statements());
 			}
-		//}
 
-        return Value.VOID;
+        return  this.visit(ctx.statements());
 	}
 
 
@@ -337,15 +328,18 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitForDoLoop(PascalParser.ForDoLoopContext ctx) { 
         int start = this.visit(ctx.expression(0)).asDouble().intValue();
 		int stop = this.visit(ctx.expression(1)).asDouble().intValue();
+		Value value =this.visit(ctx.expression(0));
 		System.out.println(this.visit(ctx.expression(0)).asString());
 		System.out.println(this.visit(ctx.expression(1)).asString());
         for(int i = start; i <= stop; i++) {
            
             //if(returnValue != TLValue.VOID) {
-				return this.visit(ctx.statements());
+				this.visit(ctx.statements());
+				// evaluate code block
+				value = this.visit(ctx.expression(0));
             //}
         }
-        return Value.VOID;
+        return this.visit(ctx.expression(0));
 	}
 
 
