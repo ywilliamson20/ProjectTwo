@@ -9,7 +9,11 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 
 
 	/*********************************************************/
-
+	@Override
+	public Value visitFunctionBlock(PascalParser.FunctionBlockContext ctx){
+		System.out.println("function");
+		return Value.VOID;
+	}
 
 	@Override 
 	public Value visitVarSingleDec(PascalParser.VarSingleDecContext ctx) { 
@@ -62,10 +66,10 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override
 	public Value visitAssignStatement(PascalParser.AssignStatementContext ctx) {
 		//System.out.println("assign");
-		String id = ctx.getText();
-		Value v = this.visit(ctx.expression());
-		//System.out.println("Id: " + id + " | Value: " + v.asString());
-		return memory.put(id, new Value(v));
+        String id = ctx.ID().getText();
+        Value v = this.visit(ctx.expression());
+       // System.out.println("Id: " + id + " | Value: " + v.asString());
+        return memory.put(id, v);
 	}
 	
 
@@ -274,17 +278,19 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
         Value value = this.visit(ctx.expression());
         
         String choice = this.visit(ctx.expression()).asString();
-		System.out.println(choice);
+		//System.out.println(choice);
 
 		if (choice=="true") {
-            String result = this.visit(ctx.statement(0)).asString();
-            result = result.substring(0, result.length()-25);
-            System.out.println(result);
+            System.out.println(true);
+           //if(this.visit(ctx.statement(0)).asString()!=null){
+            //return this.visit(ctx.statement(0));
+           //}
+            
         }
         if (choice=="false") {
-            String result = this.visit(ctx.statement(1)).asString();
-            result = result.substring(0, result.length()-25);
-            System.out.println(result);
+            System.out.println(false);
+            //return this.visit(ctx.statement(1));
+            
         }
         
        return Value.VOID;
@@ -307,30 +313,40 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	// }
 
 
-	// @Override 
-	// public Value visitWhileDoLoop(PascalParser.WhileDoLoopContext ctx) { 
-	// 	Value value = this.visit(ctx.expression());
-	// 	//System.out.println("while");
-	// 	//System.out.println(value.asBoolean());
+	@Override 
+	public Value visitWhileDoLoop(PascalParser.WhileDoLoopContext ctx) { 
+		Value value = this.visit(ctx.expression());
+		//System.out.println("while");
+		//System.out.println(value.asBoolean());
 		
-	// 	if (value != null){
-	// 		while(value.asBoolean()) {
-	// 			// evaluate code block
-	// 			this.visit(ctx.statements());
-	// 			// evaluate expression
-	// 			value = this.visit(ctx.expression());
-	// 		}
-	// 	}
+		//if (this.visit(ctx.expression()) != null){
 
-    //     return Value.VOID;
-	// }
+			while(value.asBoolean()) {
+				// evaluate code block
+			
+				// evaluate expression
+				return this.visit(ctx.statements());
+			}
+		//}
+
+        return Value.VOID;
+	}
 
 
-	// @Override 
-	// public Value visitForDoLoop(PascalParser.ForDoLoopContext ctx) { 
-	// 	//System.out.println("for loop");
-	// 	return this.visit(ctx.expression(0));
-	// }
+	@Override 
+	public Value visitForDoLoop(PascalParser.ForDoLoopContext ctx) { 
+        int start = this.visit(ctx.expression(0)).asDouble().intValue();
+		int stop = this.visit(ctx.expression(1)).asDouble().intValue();
+		System.out.println(this.visit(ctx.expression(0)).asString());
+		System.out.println(this.visit(ctx.expression(1)).asString());
+        for(int i = start; i <= stop; i++) {
+           
+            //if(returnValue != TLValue.VOID) {
+				return this.visit(ctx.statements());
+            //}
+        }
+        return Value.VOID;
+	}
 
 
 	@Override 
