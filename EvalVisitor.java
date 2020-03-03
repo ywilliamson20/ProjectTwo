@@ -6,12 +6,24 @@ import java.util.Map;
 
 public class EvalVisitor extends PascalBaseVisitor<Value> {
     private Map<String,Value> memory = new HashMap<String,Value>();
-
+	private Scope scope = new Scope();
 
 	/*********************************************************/
 	@Override
 	public Value visitFunctionBlock(PascalParser.FunctionBlockContext ctx){
 		System.out.println("function");
+		return Value.VOID;
+	}
+
+	@Override
+	public Value visitProcedureBlock(PascalParser.ProcedureBlockContext ctx){
+		System.out.println("procedure");
+		return Value.VOID;
+	}
+
+	@Override
+	public Value visitParameters(PascalParser.ParametersContext ctx){
+		System.out.println("parameters");
 		return Value.VOID;
 	}
 
@@ -67,7 +79,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitAssignStatement(PascalParser.AssignStatementContext ctx) {
 		//System.out.println("assign");
         String id = ctx.ID().getText();
-        Value v = this.visit(ctx.expression());
+		Value v = this.visit(ctx.expression());
+		//scope.setValue(id, v);
        // System.out.println("Id: " + id + " | Value: " + v.asString());
         return memory.put(id, v);
 	}
@@ -260,7 +273,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
                 String v = this.visit(ctx.expression(i)).asString();
                 //String text = ctx.expression(i).getText();
                 if (v != null) {
-					output = output + v;
+					output = output + v ;
 					//System.out.println(v);
 				}
 			}
@@ -332,12 +345,12 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		System.out.println(this.visit(ctx.expression(0)).asString());
 		System.out.println(this.visit(ctx.expression(1)).asString());
         for(int i = start; i <= stop; i++) {
-           
-            //if(returnValue != TLValue.VOID) {
+			//scope.setValue(ctx.ID().getText(), new Value(i));
+       
 				this.visit(ctx.statements());
-				// evaluate code block
+			
 				value = this.visit(ctx.expression(0));
-            //}
+           
         }
         return this.visit(ctx.expression(0));
 	}
