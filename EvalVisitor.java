@@ -64,6 +64,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override 
 	public Value visitSubprogramCall(PascalParser.SubprogramCallContext ctx){
 		String id = ctx.ID().getText();
+		//System.out.print(ctx.ID().size);
 		if(expr !=null && call.containsKey(id));
 		{
 			
@@ -393,7 +394,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 
 		if (choice == "true") {
 			if(ctx.BREAK(0)!=null&&brea==false){
-
+				pop=true;
 				brea=true;
 				return Value.VOID;
 			}
@@ -494,7 +495,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 			}else{
 				this.visit(ctx.statements());
 				val = this.visit(ctx.expression());
-				pop=false;
+				//pop=false;
 			}
 			
 		}
