@@ -1,41 +1,38 @@
+// Project 2
+// By Nicole Ajoy & Yvette Williamson
 
-/***** PROJECT 2 *****/
-// Student Group: Nicole Ajoy & Yvette Williamson
-
-/***** HOW TO RUN *****/
-/***** PROJECT 2 *****/
-// Student Group: Nicole Ajoy & Yvette Williamson
-
-/***** HOW TO RUN *****/
-/* 
-cd C:\Javalib\pascal
-antlr4 Pascal.g4
-javac *.java
-java Main tests/test16.pas
-(# between 1-19)
-*/
-
-/*********************************************************/
+//----------------------------------------------------//
 
 grammar Pascal;
 
 program
-   : programHeader ((partBlock)* mainBlock)+
+   : programHeader blocks
    ;
 
 programHeader
    : PROGRAM ID ';'
    ;
 
-partBlock
-   : functionStart 
-   | varDecBlock 
+blocks
+   : (functionBlock | procedureBlock)* mainBlock
    ;
 
-functionStart
-   :'function' ID LEFTP ARGUMENTS (',' ARGUMENTS)* RIGHTP ':' ID
+functionBlock
+   : FUNCTION ID '(' parameters ')' ':' type=(BOOLEAN | REAL) ';' (varDecBlock)* BEGIN statements END ';'
    ;
-  
+
+procedureBlock
+   : PROCEDURE ID '(' parameters ')' ';' (varDecBlock)* BEGIN statements END ';'
+   ;
+
+parameters
+   : varDec (';' varDec)*
+   ;
+
+mainBlock
+   : (varDecBlock)* BEGIN statements END '.'
+   ;
+
 varDecBlock
    : VAR (varDec ';')+
    ;
@@ -43,10 +40,6 @@ varDecBlock
 varDec 
    : ID ':' type=(BOOLEAN | REAL) '=' expression   #varSingleDec
    | ID (',' ID)* ':' type=(BOOLEAN | REAL)        #varListDec
-   ;
-
-mainBlock
-   : BEGIN statements END '.'
    ;
 
 statements
@@ -62,6 +55,7 @@ statement
    | forDoLoop
    | writeStatement
    | readStatement
+   | subprogramCall
    ;
 
 assignStatement
@@ -70,25 +64,33 @@ assignStatement
 
 expression
    : '(' expression ')'                                  #parenthesisExpression
-   // Special functions
+   | subprogramCall                                      #subprogramCallExpression
+   // special functions
    | SQRT expression                                     #sqrtExpression
    | SIN expression                                      #sinExpression
    | COS expression                                      #cosExpression
    | LN expression                                       #logExpression
-   | POWER expression                                    #expExpression
-   // Arithmetic expressions
+   | EXP expression                                      #expExpression
+   // arithmetic expressions
    | expression op=(PRODUCT | DIVIDE | MOD) expression   #multiplicativeExpression
    | expression op=(PLUS | MINUS) expression             #additiveExpression
    | MINUS expression                                    #negExpression
-   // Conditional operators
+   // conditional operators
+   | NOT expression                                      #notExpression
    | expression AND expression                           #andExpression
    | expression OR expression                            #orExpression
-   | NOT expression                                      #notExpression
    | expression op=(EQ | NEQ) expression                 #equalityExpression
-   | expression op=(GT | LT | GE | LE) expression        #relationalExpression
-   | NOT expression                                      #notExpression
-   // Tiny expressions
+   | expression op=(GT | LT | GTE | LTE) expression      #relationalExpression
+   // tiny expressions
    | atom                                                #atomExpression
+   ;
+
+subprogramCall
+   : ID '(' arguments ')'
+   ;
+
+arguments
+   : ID (',' ID)*
    ;
 
 atom
@@ -99,7 +101,7 @@ atom
    ;
 
 ifStatement
-   : IF expression THEN statement (ELSE statement)?
+   : IF expression THEN (CONTINUE)? statement (BREAK)?  (ELSE statement (BREAK)?(CONTINUE)?)?
    ;
 
 caseStatement
@@ -111,7 +113,7 @@ whileDoLoop
    ;
 
 forDoLoop
-   : FOR ID ':=' expression TO expression DO BEGIN statements END
+   : FOR ID ':=' expression count=(TO | DOWNTO) expression DO BEGIN statements END
    ;
 
 writeStatement
@@ -124,7 +126,7 @@ readStatement
    | READLN '(' ID (',' ID )* ')'   #readInput
    ;
 
-// Arithmetic operators
+// arithmetic operators
 PLUS           : '+';
 MINUS          : '-';
 PRODUCT        : '*';
@@ -134,33 +136,37 @@ SQRT           : 'sqrt';
 SIN            : 'sin';
 COS            : 'cos';
 LN             : 'ln';
-POWER          : 'exp';
+EXP            : 'exp';
 
-// Boolean operators
+// boolean operators
 TRUE           : 'true';
 FALSE          : 'false';
 AND            : 'and';	
 NOT            : 'not';
 OR             : 'or';
 
-// Logical operators
+// logical operators
 EQ             : '=';
 NEQ            : '<>';
 GT             : '>';
 LT             : '<';
-GE             : '>=';
-LE             : '<=';
+GTE            : '>=';
+LTE            : '<=';
 
-// Comments
+// comments
 COMMENT_B      : '{' (.*?) '}' -> skip;
 COMMENT_P      : '(*' (.*?) '*)' -> skip;
 
-// Other keywords
+// keywords
 BEGIN          : 'begin';
 BOOLEAN        : 'boolean';
+BREAK          : 'break';
 CASE           : 'case';
 CONST          : 'const';
+CONTINUE       : 'continue';
 DO             : 'do';
+DOWNTO         : 'downto';
+FUNCTION       : 'function';
 OF             : 'of';
 ELSE           : 'else';
 END            : 'end';
@@ -171,19 +177,12 @@ READLN         : 'readln';
 REAL           : 'real';
 TO             : 'to';
 THEN           : 'then';
+PROCEDURE      : 'procedure';
 VAR            : 'var';
 WHILE          : 'while';
 WRITELN        : 'writeln';
 
-//Functions Elements
-LEFTP          :'(';
-RIGHTP         :')';
-FUNCTIONNAME : ID ;
-ARGUMENTS :    ID (',' ID)* ;
-//FUNCTION:      FUNCTIONNAME LEFTP ARGUMENTS (',' ARGUMENTS)* RIGHTP ;
-
-
-// Essentials
+// atoms
 ID             : [A-Za-z][_A-Za-z0-9]*;
 REAL_NUMBER    : [0-9]+('.'[0-9]+)?;
 STRING         : '\'' (.*?) '\'';
