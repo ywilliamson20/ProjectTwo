@@ -101,7 +101,7 @@ atom
    ;
 
 ifStatement
-   : IF expression THEN (CONTINUE)? statement (BREAK)?  (ELSE statement (BREAK)?(CONTINUE)?)?
+   : IF expression THEN statement (CONTINUE)?(BREAK)?  (ELSE statement (BREAK)?(CONTINUE)?)?
    ;
 
 caseStatement
