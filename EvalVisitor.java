@@ -19,6 +19,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	private Map<String, PascalParser.ParametersContext > vars= new HashMap<String, PascalParser.ParametersContext >();
 	List<PascalParser.StatementsContext> expr = new ArrayList<>();
 	boolean pop =false;
+	boolean contin =false;
     //EvalVisitor(Scope scope, Map<String, Function> functions) {
        // this.scope = scope;
        // this.functions = functions;
@@ -72,7 +73,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 			//System.out.print("sub" +scope.size());
 			
 			this.visit(call.get(id));
-			scope.clearValue();
+			scope.rem(id);
 
 		}
 		return Value.VOID;
@@ -84,10 +85,10 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		scope = new Scope();
 		System.out.println("var list size: ");
 		scope.getScope();
-		//vars.put(ctx.ID().getText(),ctx.parameters());
+		vars.put(ctx.ID().getText(),ctx.parameters());
 		call.put(ctx.ID().getText(),ctx.statements());
 		//System.out.print("prod" +scope.size());
-		scope.clearValue();
+		//scope.clearValue();
 		return Value.VOID;
 	}
 
