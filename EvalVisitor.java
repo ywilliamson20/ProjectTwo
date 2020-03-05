@@ -14,7 +14,18 @@ import java.util.ArrayList;
 
 public class EvalVisitor extends PascalBaseVisitor<Value> {
 	private Map<String, Value> memory = new HashMap<String, Value>();
-
+	List<String> functions =new ArrayList<>();
+	private Map<String, PascalParser.StatementsContext > call= new HashMap<String, PascalParser.StatementsContext >();
+	private Map<String, PascalParser.ParametersContext > vars= new HashMap<String, PascalParser.ParametersContext >();
+    List<PascalParser.StatementsContext> expr = new ArrayList<>();
+    //EvalVisitor(Scope scope, Map<String, Function> functions) {
+       // this.scope = scope;
+       // this.functions = functions;
+	//}
+	
+	EvalVisitor() {
+      
+	}
 
 	@Override 
 	public Value visitVarSingleDec(PascalParser.VarSingleDecContext ctx) {
@@ -36,15 +47,35 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 
 	@Override 
 	public Value visitFunctionBlock(PascalParser.FunctionBlockContext ctx){
-		List<Value> expr =new ArrayList<>();
-		 //expr.add(ctx.statements());
-		System.out.println(ctx.statements().getText());
+		//List<Value> expr =new ArrayList<>();
+		
+		//functions.add(ctx.ID().getText());
+		//expr.add(ctx.statements());
+		vars.put(ctx.ID().getText(),ctx.parameters());
+		call.put(ctx.ID().getText(),ctx.statements());
+		//System.out.println(ctx.statements().getText());
 		return Value.VOID;
 	}
 
 	@Override 
+	public Value visitSubprogramCall(PascalParser.SubprogramCallContext ctx){
+		String id = ctx.ID().getText();
+		System.out.println(call.size());
+		System.out.println("got here");
+		if(expr !=null && call.containsKey(id));
+		{
+			//System.out.print(call.get(id).getText());
+			this.visit(vars.get(id));
+			return this.visit(call.get(id));
+
+		}
+		//return Value.VOID;
+	}
+
+
+	@Override 
 	public Value visitMainBlock(PascalParser.MainBlockContext ctx){
-		
+		//System.out.println("got here");
 
 		return this.visit(ctx.statements());
 	}
