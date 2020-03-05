@@ -147,9 +147,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		String id = ctx.ID().getText();
 		Value val = this.visit(ctx.expression());
 		if(scope.getValue(id)==null){
-			scope.addToSymTab(id, val);
-			//scope.setValue(id, val);
-			//return scope.setValue(id, val);;
+			throw new RuntimeException("need to declare variable: " + id);
 		}
 		
 		//System.out.println("Id: " + id + " | Value: " + v.asString());
@@ -385,6 +383,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitIfStatement(PascalParser.IfStatementContext ctx) {
         //System.out.println("expression list size: " + ctx.expression(0).size());
 		String choice = this.visit(ctx.expression()).asString();
+		int val = ctx.statement().size();
 		boolean brea =false;
 		boolean cont=false;
 		boolean skip =false;
@@ -401,10 +400,14 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 			else if (ctx.BREAK(0)!=null&&brea==true){
 				this.visit(ctx.statement(0));
 			}
+			else if(ctx.BREAK(0)==null)
+			{
+				this.visit(ctx.statement(0));
+			}
 			if(ctx.CONTINUE(0)!=null&&cont==false){
 				cont=true;
 				pop=true;
-				System.out.println("continue");
+				//System.out.println("continue");
 				this.visit(ctx.statement(0));
 
 			}
@@ -434,6 +437,11 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				return Value.VOID;
 			}
 			else if (ctx.BREAK(0)!=null&&brea==false){
+				if(val==2){
+					this.visit(ctx.statement(1));
+				}
+			}
+			else if(ctx.BREAK(0)==null){
 				this.visit(ctx.statement(1));
 			}
 			if(ctx.CONTINUE(0)!=null&&cont==true){
@@ -441,7 +449,10 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				
 				
 			}else if (ctx.CONTINUE(0)!=null&&cont==false){
-				this.visit(ctx.statement(1));
+				if(val==2){
+					this.visit(ctx.statement(1));
+				}
+				
 				
 			}
 		
