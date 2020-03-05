@@ -18,34 +18,31 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	private Map<String, PascalParser.StatementsContext > call= new HashMap<String, PascalParser.StatementsContext >();
 	private Map<String, PascalParser.ParametersContext > vars= new HashMap<String, PascalParser.ParametersContext >();
 	List<PascalParser.StatementsContext> expr = new ArrayList<>();
-	
+	boolean pop =false;
     //EvalVisitor(Scope scope, Map<String, Function> functions) {
        // this.scope = scope;
        // this.functions = functions;
 	//}
 	Scope scope = new Scope();
-	
-	EvalVisitor() {
-      
-	}
+
 
 	@Override 
 	public Value visitVarSingleDec(PascalParser.VarSingleDecContext ctx) {
 		String id = ctx.ID().getText();
 		Value val = this.visit(ctx.expression());
-		//System.out.println("Value stored: " + v.asString());
+		System.out.println("Value stored: " + val.asString());
 		
 		switch (ctx.type.getType()) {
 			case PascalParser.BOOLEAN:
 				// System.out.println("Type: boolean");
 				scope.addToSymTab(id, val);
 			
-				return Value.VOID;
+				return val;
 			case PascalParser.REAL:
 				// System.out.println("Type: real");
 				scope.addToSymTab(id, val);
 				
-				return Value.VOID;
+				return val;
 			default:
 				throw new RuntimeException("unknown type: " + ctx.type.getType());
 		}
@@ -86,7 +83,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		scope = new Scope();
 		System.out.println("var list size: ");
 		scope.getScope();
-		vars.put(ctx.ID().getText(),ctx.parameters());
+		//vars.put(ctx.ID().getText(),ctx.parameters());
 		call.put(ctx.ID().getText(),ctx.statements());
 		//System.out.print("prod" +scope.size());
 		scope.clearValue();
@@ -107,26 +104,17 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		//System.out.print("prob"+scope.size());
 		scope.clearValue();
 		}
-		
+		scope.clearValue();
 		this.visit(ctx.mainBlock());
 		
 		return Value.VOID;
 	}
 
-	@Override 
-	public Value visitMainBlock(PascalParser.MainBlockContext ctx){
-		scope = new Scope();
-		scope.getScope();
-		this.visit(ctx.statements());
-		//System.out.print("main" +scope.size());
-		scope.clearValue();
-		return Value.VOID;
-	}
-
+	
 	
 	@Override 
 	public Value visitVarListDec(PascalParser.VarListDecContext ctx) {
-		//System.out.println("var list size: " + ctx.ID().size());
+		System.out.println("var list size: " + ctx.ID().size());
 
         switch (ctx.type.getType()) {
 			case PascalParser.BOOLEAN:
@@ -167,7 +155,7 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		//System.out.println("Id: " + id + " | Value: " + v.asString());
 		scope.setValue(id, val);
 		//return memory.put(id, val);
-		return Value.VOID;
+		return  this.visit(ctx.expression());
 	}
 	
 
@@ -399,6 +387,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		String choice = this.visit(ctx.expression()).asString();
 		boolean brea =false;
 		boolean cont=false;
+		boolean skip =false;
+		
 		//System.out.println(choice);
 		
 
@@ -409,15 +399,31 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				return Value.VOID;
 			}
 			else if (ctx.BREAK(0)!=null&&brea==true){
-				this.visit(ctx.statement(1));
+				this.visit(ctx.statement(0));
 			}
 			if(ctx.CONTINUE(0)!=null&&cont==false){
 				cont=true;
+				pop=true;
+				System.out.println("continue");
+				this.visit(ctx.statement(0));
 
 			}
-		else if (ctx.CONTINUE(0)!=null&&cont==true){
-			this.visit(ctx.statement(0));
-		}
+			else if(ctx.CONTINUE(0)!=null&&cont==false&&skip==false)
+			{
+				cont=true;
+				if (ctx.CONTINUE(0)!=null&&cont==true){
+					skip=true;
+					this.visit(ctx.statement(0));
+					//this.visit(ctx.statement().expression(0)).asDouble=this.visit(ctx.statement().expression(0)).asDouble()+1;
+				}
+				else if (ctx.CONTINUE(0)!=null&&cont==true&&skip==true){
+
+					this.visit(ctx.statement(0));
+				}
+				
+
+			}
+			
 	}	
 			
 		
@@ -471,8 +477,15 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		Value val = this.visit(ctx.expression());
 		
 		while (val.asBoolean() == true) {
-			this.visit(ctx.statements());
-			val = this.visit(ctx.expression());
+			if(pop==true){
+				//val = this.visit(ctx.expression());
+				return Value.VOID;
+			}else{
+				this.visit(ctx.statements());
+				val = this.visit(ctx.expression());
+				pop=false;
+			}
+			
 		}
 		
 		return Value.VOID;
