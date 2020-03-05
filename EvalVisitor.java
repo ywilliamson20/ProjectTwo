@@ -13,15 +13,17 @@ import java.util.Scanner;
 import java.util.ArrayList;
 
 public class EvalVisitor extends PascalBaseVisitor<Value> {
-	private Map<String, Value> memory = new HashMap<String, Value>();
+	//private Map<String, Value> memory = new HashMap<String, Value>();
 	List<String> functions =new ArrayList<>();
 	private Map<String, PascalParser.StatementsContext > call= new HashMap<String, PascalParser.StatementsContext >();
 	private Map<String, PascalParser.ParametersContext > vars= new HashMap<String, PascalParser.ParametersContext >();
-    List<PascalParser.StatementsContext> expr = new ArrayList<>();
+	List<PascalParser.StatementsContext> expr = new ArrayList<>();
+	
     //EvalVisitor(Scope scope, Map<String, Function> functions) {
        // this.scope = scope;
        // this.functions = functions;
 	//}
+	Scope scope = new Scope();
 	
 	EvalVisitor() {
       
@@ -36,50 +38,92 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 		switch (ctx.type.getType()) {
 			case PascalParser.BOOLEAN:
 				// System.out.println("Type: boolean");
-				return memory.put(id, val);
+				scope.addToSymTab(id, val);
+			
+				return Value.VOID;
 			case PascalParser.REAL:
 				// System.out.println("Type: real");
-				return memory.put(id, val);
+				scope.addToSymTab(id, val);
+				
+				return Value.VOID;
 			default:
 				throw new RuntimeException("unknown type: " + ctx.type.getType());
 		}
+	
 	}
 
 	@Override 
 	public Value visitFunctionBlock(PascalParser.FunctionBlockContext ctx){
-		//List<Value> expr =new ArrayList<>();
-		
-		//functions.add(ctx.ID().getText());
-		//expr.add(ctx.statements());
+		scope = new Scope();
+		scope.getScope();
 		vars.put(ctx.ID().getText(),ctx.parameters());
 		call.put(ctx.ID().getText(),ctx.statements());
-		//System.out.println(ctx.statements().getText());
+		//System.out.print("func" +scope.size());
+		//scope = scope.getScope();
+		scope.clearValue();
 		return Value.VOID;
 	}
 
 	@Override 
 	public Value visitSubprogramCall(PascalParser.SubprogramCallContext ctx){
 		String id = ctx.ID().getText();
-		System.out.println(call.size());
-		System.out.println("got here");
 		if(expr !=null && call.containsKey(id));
 		{
-			//System.out.print(call.get(id).getText());
+			
 			this.visit(vars.get(id));
-			return this.visit(call.get(id));
+			//System.out.print("sub" +scope.size());
+			
+			this.visit(call.get(id));
+			scope.clearValue();
 
 		}
-		//return Value.VOID;
+		return Value.VOID;
+
 	}
 
+	@Override 
+	public Value visitProcedureBlock(PascalParser.ProcedureBlockContext ctx){
+		scope = new Scope();
+		System.out.println("var list size: ");
+		scope.getScope();
+		vars.put(ctx.ID().getText(),ctx.parameters());
+		call.put(ctx.ID().getText(),ctx.statements());
+		//System.out.print("prod" +scope.size());
+		scope.clearValue();
+		return Value.VOID;
+	}
+
+	@Override 
+	public Value visitBlocks(PascalParser.BlocksContext ctx)
+	{
+		for (int i = 0; i < ctx.functionBlock().size(); i++) {
+		this.visit(ctx.functionBlock(i));
+		//System.out.print("funcs"+scope.size());
+		scope.clearValue();
+		
+		}
+		for (int i = 0; i < ctx.procedureBlock().size(); i++) {
+		this.visit(ctx.procedureBlock(i));
+		//System.out.print("prob"+scope.size());
+		scope.clearValue();
+		}
+		
+		this.visit(ctx.mainBlock());
+		
+		return Value.VOID;
+	}
 
 	@Override 
 	public Value visitMainBlock(PascalParser.MainBlockContext ctx){
-		//System.out.println("got here");
-
-		return this.visit(ctx.statements());
+		scope = new Scope();
+		scope.getScope();
+		this.visit(ctx.statements());
+		//System.out.print("main" +scope.size());
+		scope.clearValue();
+		return Value.VOID;
 	}
 
+	
 	@Override 
 	public Value visitVarListDec(PascalParser.VarListDecContext ctx) {
 		//System.out.println("var list size: " + ctx.ID().size());
@@ -90,7 +134,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				for (int i = 0; i < ctx.ID().size(); i++) {
 					String id = ctx.ID(i).getText();
 					//System.out.println("ID[" + i + "]: " + id);
-					memory.put(id, new Value(false));
+					//memory.put(id, new Value(false));
+					scope.addToSymTab(id, new Value(false));
 				}
 				return Value.VOID;
 			case PascalParser.REAL:
@@ -98,8 +143,10 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				for (int i = 0; i < ctx.ID().size(); i++) {
 					String id = ctx.ID(i).getText();
 					//System.out.println("ID [" + i + "]: " + id);
-					memory.put(id, new Value(0.0));
+					scope.addToSymTab(id, new Value(0.0));
+					//memory.put(id, new Value(0.0));
 				}
+				
 				return Value.VOID;
 			default:
 				throw new RuntimeException("unknown type: " + ctx.type.getType());
@@ -111,8 +158,16 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitAssignStatement(PascalParser.AssignStatementContext ctx) {
 		String id = ctx.ID().getText();
 		Value val = this.visit(ctx.expression());
+		if(scope.getValue(id)==null){
+			scope.addToSymTab(id, val);
+			//scope.setValue(id, val);
+			//return scope.setValue(id, val);;
+		}
+		
 		//System.out.println("Id: " + id + " | Value: " + v.asString());
-		return memory.put(id, val);
+		scope.setValue(id, val);
+		//return memory.put(id, val);
+		return Value.VOID;
 	}
 	
 
@@ -326,7 +381,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 			String input = sc.nextLine();
 			try {
 				Value v = new Value(Double.parseDouble(input));
-				memory.put(id, v);
+				//memory.put(id, v);
+				scope.addToSymTab(id,v);
 			}
 			catch (Exception e) {
 				throw new RuntimeException("cannot read variables of this type");
@@ -340,14 +396,50 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	@Override 
 	public Value visitIfStatement(PascalParser.IfStatementContext ctx) {
         //System.out.println("expression list size: " + ctx.expression(0).size());
-        String choice = this.visit(ctx.expression()).asString();
+		String choice = this.visit(ctx.expression()).asString();
+		boolean brea =false;
+		boolean cont=false;
 		//System.out.println(choice);
+		
 
 		if (choice == "true") {
-			return this.visit(ctx.statement(0));
+			if(ctx.BREAK(0)!=null&&brea==false){
+
+				brea=true;
+				return Value.VOID;
+			}
+			else if (ctx.BREAK(0)!=null&&brea==true){
+				this.visit(ctx.statement(1));
+			}
+			if(ctx.CONTINUE(0)!=null&&cont==false){
+				cont=true;
+
+			}
+		else if (ctx.CONTINUE(0)!=null&&cont==true){
+			this.visit(ctx.statement(0));
 		}
+	}	
+			
+		
 		if (choice == "false") {
-			return this.visit(ctx.statement(1));
+			if(ctx.BREAK(0)!=null&&brea==true){
+
+				brea=false;
+				return Value.VOID;
+			}
+			else if (ctx.BREAK(0)!=null&&brea==false){
+				this.visit(ctx.statement(1));
+			}
+			if(ctx.CONTINUE(0)!=null&&cont==true){
+				cont=false;
+				
+				
+			}else if (ctx.CONTINUE(0)!=null&&cont==false){
+				this.visit(ctx.statement(1));
+				
+			}
+		
+			 
 		}
 		
 		return Value.VOID;
@@ -390,8 +482,10 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitForDoLoop(PascalParser.ForDoLoopContext ctx) { 
         int start = this.visit(ctx.expression(0)).asDouble().intValue();
 		int stop = this.visit(ctx.expression(1)).asDouble().intValue();
+		
 		Value val = this.visit(ctx.expression(0));
-		memory.put(ctx.ID().getText(), val);
+		scope.addToSymTab(ctx.ID().getText(), val);
+		//memory.put(ctx.ID().getText(), val);
 		
 		//System.out.println(this.visit(ctx.expression(0)).asString());
 		//System.out.println(this.visit(ctx.expression(1)).asString());
@@ -401,7 +495,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				//System.out.println("to");
 				if (stop > start) {
 					for (int i = start; i <= stop; i++) {
-						memory.put(ctx.ID().getText(), new Value(i));
+						scope.addToSymTab(ctx.ID().getText(), new Value(i));
+						//memory.put(ctx.ID().getText(), new Value(i));
 						this.visit(ctx.statements());
 					}
 					return Value.VOID;
@@ -410,7 +505,8 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 				//System.out.println("downto");
 				if (start > stop) {
 					for (int i = start; i >= stop; i--) {
-						memory.put(ctx.ID().getText(), new Value(i));
+						scope.addToSymTab(ctx.ID().getText(), new Value(i));
+						//memory.put(ctx.ID().getText(), new Value(i));
 						this.visit(ctx.statements());
 					}
 					return Value.VOID;
@@ -439,13 +535,14 @@ public class EvalVisitor extends PascalBaseVisitor<Value> {
 	public Value visitIdAtom(PascalParser.IdAtomContext ctx) {
 		//System.out.println("id atom");
 		String id = ctx.getText();
-		Value val = memory.get(id);
+		//Value val = memory.get(id);
+		Value scop = scope.getValue(id);
 		
-		if (val == null) {
+		if (scop == null) {
 			throw new RuntimeException("no such variable: " + id);
 		}
 		
-		return val;
+		return scop;
 	}
 	
 	
