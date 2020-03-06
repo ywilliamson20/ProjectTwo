@@ -62,7 +62,9 @@ public class Scope {
     public void clearValue() {
         symbolTable.clear();
     }
-
+    public void rem(String val) {
+        symbolTable.remove(val);
+    }
     public void resetValue(String id, Value val) {
         // Variable in scope
         if (symbolTable.containsKey(id)) {
